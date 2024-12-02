@@ -138,8 +138,9 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# node_modules
+# ruoyi-fastapi-frontend
 ruoyi-fastapi-frontend/node_modules/
 
 # idea
 .idea/
+ruoyi-fastapi-frontend/.idea/
