@@ -112,6 +112,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+XuanfufuVenv/
 
 # Spyder project settings
 .spyderproject
@@ -136,3 +137,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# node_modules
+ruoyi-fastapi-frontend/node_modules/
