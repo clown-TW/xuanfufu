@@ -140,3 +140,6 @@ cython_debug/
 
 # node_modules
 ruoyi-fastapi-frontend/node_modules/
+
+# idea
+.idea/
