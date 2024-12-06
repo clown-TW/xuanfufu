@@ -143,4 +143,5 @@ ruoyi-fastapi-frontend/node_modules/
 
 # idea
 .idea/
+__pycache__/
 
