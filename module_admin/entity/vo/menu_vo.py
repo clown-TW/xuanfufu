@@ -1,7 +1,9 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 from pydantic_validation_decorator import NotBlank, Size
 from typing import Literal, Optional
+from module_admin.annotation.pydantic_annotation import as_query
 
 
 class MenuModel(BaseModel):
@@ -9,7 +11,7 @@ class MenuModel(BaseModel):
     菜单表对应pydantic模型
     """
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
     menu_id: Optional[int] = Field(default=None, description='菜单ID')
     menu_name: Optional[str] = Field(default=None, description='菜单名称')
@@ -66,6 +68,7 @@ class MenuModel(BaseModel):
         self.get_perms()
 
 
+@as_query
 class MenuQueryModel(MenuModel):
     """
     菜单管理不分页查询模型
@@ -79,5 +82,7 @@ class DeleteMenuModel(BaseModel):
     """
     删除菜单模型
     """
+
+    model_config = ConfigDict(alias_generator=to_camel)
 
     menu_ids: str = Field(description='需要删除的菜单ID')

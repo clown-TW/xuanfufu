@@ -13,11 +13,11 @@ class AppSettings(BaseSettings):
     """
 
     app_env: str = 'dev'
-    app_name: str = 'Dash-FasAPI-Admin'
+    app_name: str = 'RuoYi-FasAPI'
     app_root_path: str = '/dev-api'
     app_host: str = '0.0.0.0'
     app_port: int = 9099
-    app_version: str = '2.0.0'
+    app_version: str = '1.0.0'
     app_reload: bool = True
     app_ip_location_query: bool = True
     app_same_time_login: bool = True
@@ -70,7 +70,7 @@ class UploadSettings:
     """
 
     UPLOAD_PREFIX = '/profile'
-    UPLOAD_PATH = 'df_admin/upload_path'
+    UPLOAD_PATH = 'vf_admin/upload_path'
     UPLOAD_MACHINE = 'A'
     DEFAULT_ALLOWED_EXTENSION = [
         # 图片
@@ -101,7 +101,7 @@ class UploadSettings:
         # pdf
         'pdf',
     ]
-    DOWNLOAD_PATH = 'df_admin/download_path'
+    DOWNLOAD_PATH = 'vf_admin/download_path'
 
     def __init__(self):
         if not os.path.exists(self.UPLOAD_PATH):

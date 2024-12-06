@@ -15,10 +15,11 @@ from exceptions.exception import LoginException, AuthException, ServiceException
 from module_admin.dao.login_dao import login_by_account
 from module_admin.dao.user_dao import UserDao
 from module_admin.entity.do.menu_do import SysMenu
+from module_admin.entity.vo.common_vo import CrudResponseModel
 from module_admin.entity.vo.login_vo import MenuTreeModel, MetaModel, RouterModel, SmsCode, UserLogin, UserRegister
 from module_admin.entity.vo.user_vo import AddUserModel, CurrentUserModel, ResetUserModel, TokenData, UserInfoModel
 from module_admin.service.user_service import UserService
-from utils.common_util import SqlalchemyUtil
+from utils.common_util import CamelCaseUtil
 from utils.log_util import logger
 from utils.message_util import message_service
 from utils.pwd_util import PwdUtil
@@ -246,11 +247,11 @@ class LoginService:
                 permissions=permissions,
                 roles=roles,
                 user=UserInfoModel(
-                    **SqlalchemyUtil.serialize_result(query_user.get('user_basic_info')),
-                    post_ids=post_ids,
-                    role_ids=role_ids,
-                    dept=SqlalchemyUtil.serialize_result(query_user.get('user_dept_info')),
-                    role=SqlalchemyUtil.serialize_result(query_user.get('user_role_info')),
+                    **CamelCaseUtil.transform_result(query_user.get('user_basic_info')),
+                    postIds=post_ids,
+                    roleIds=role_ids,
+                    dept=CamelCaseUtil.transform_result(query_user.get('user_dept_info')),
+                    role=CamelCaseUtil.transform_result(query_user.get('user_role_info')),
                 ),
             )
             return current_user
@@ -278,7 +279,7 @@ class LoginService:
         )
         menus = cls.__generate_menus(0, user_router_menu)
         user_router = cls.__generate_user_router_menu(menus)
-        return [router.model_dump(exclude_unset=True) for router in user_router]
+        return [router.model_dump(exclude_unset=True, by_alias=True) for router in user_router]
 
     @classmethod
     def __generate_menus(cls, pid: int, permission_list: List[SysMenu]):
@@ -293,7 +294,7 @@ class LoginService:
         for permission in permission_list:
             if permission.parent_id == pid:
                 children = cls.__generate_menus(permission.menu_id, permission_list)
-                menu_list_data = MenuTreeModel(**SqlalchemyUtil.serialize_result(permission))
+                menu_list_data = MenuTreeModel(**CamelCaseUtil.transform_result(permission))
                 if children:
                     menu_list_data.children = children
                 menu_list.append(menu_list_data)
@@ -319,7 +320,7 @@ class LoginService:
                 meta=MetaModel(
                     title=permission.menu_name,
                     icon=permission.icon,
-                    no_cache=True if permission.is_cache == 1 else False,
+                    noCache=True if permission.is_cache == 1 else False,
                     link=permission.path if RouterUtil.is_http(permission.path) else None,
                 ),
             )
@@ -338,7 +339,7 @@ class LoginService:
                     meta=MetaModel(
                         title=permission.menu_name,
                         icon=permission.icon,
-                        no_cache=True if permission.is_cache == 1 else False,
+                        noCache=True if permission.is_cache == 1 else False,
                         link=permission.path if RouterUtil.is_http(permission.path) else None,
                     ),
                     query=permission.query,
@@ -400,8 +401,8 @@ class LoginService:
                     elif user_register.code != str(captcha_value):
                         raise ServiceException(message='验证码错误')
                 add_user = AddUserModel(
-                    user_name=user_register.username,
-                    nick_name=user_register.username,
+                    userName=user_register.username,
+                    nickName=user_register.username,
                     password=PwdUtil.get_password_hash(user_register.password),
                 )
                 result = await UserService.add_user_services(query_db, add_user)
@@ -423,7 +424,7 @@ class LoginService:
         """
         redis_sms_result = await request.app.state.redis.get(f'{RedisInitKeyConfig.SMS_CODE.key}:{user.session_id}')
         if redis_sms_result:
-            raise ServiceException(message='短信验证码仍在有效期内')
+            return SmsCode(**dict(is_success=False, sms_code='', session_id='', message='短信验证码仍在有效期内'))
         is_user = await UserDao.get_user_by_name(query_db, user.user_name)
         if is_user:
             sms_code = str(random.randint(100000, 999999))
@@ -434,9 +435,9 @@ class LoginService:
             # 此处模拟调用短信服务
             message_service(sms_code)
 
-            return SmsCode(is_success=True, sms_code=sms_code, session_id=session_id, message='获取成功')
+            return SmsCode(**dict(is_success=True, sms_code=sms_code, session_id=session_id, message='获取成功'))
 
-        raise ServiceException(message='用户不存在')
+        return SmsCode(**dict(is_success=False, sms_code='', session_id='', message='用户不存在'))
 
     @classmethod
     async def forget_user_services(cls, request: Request, query_db: AsyncSession, forget_user: ResetUserModel):
@@ -452,14 +453,17 @@ class LoginService:
             f'{RedisInitKeyConfig.SMS_CODE.key}:{forget_user.session_id}'
         )
         if forget_user.sms_code == redis_sms_result:
+            forget_user.password = PwdUtil.get_password_hash(forget_user.password)
             forget_user.user_id = (await UserDao.get_user_by_name(query_db, forget_user.user_name)).user_id
             edit_result = await UserService.reset_user_services(query_db, forget_user)
-            return edit_result
+            result = edit_result.dict()
         elif not redis_sms_result:
-            raise ServiceException(message='短信验证码已过期')
+            result = dict(is_success=False, message='短信验证码已过期')
         else:
             await request.app.state.redis.delete(f'{RedisInitKeyConfig.SMS_CODE.key}:{forget_user.session_id}')
-            raise ServiceException(message='短信验证码不正确')
+            result = dict(is_success=False, message='短信验证码不正确')
+
+        return CrudResponseModel(**result)
 
     @classmethod
     async def logout_services(cls, request: Request, session_id: str):

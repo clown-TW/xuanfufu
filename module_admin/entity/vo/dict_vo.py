@@ -1,7 +1,9 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 from pydantic_validation_decorator import NotBlank, Pattern, Size
 from typing import Literal, Optional
+from module_admin.annotation.pydantic_annotation import as_query
 
 
 class DictTypeModel(BaseModel):
@@ -9,7 +11,7 @@ class DictTypeModel(BaseModel):
     字典类型表对应pydantic模型
     """
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
     dict_id: Optional[int] = Field(default=None, description='字典主键')
     dict_name: Optional[str] = Field(default=None, description='字典名称')
@@ -46,7 +48,7 @@ class DictDataModel(BaseModel):
     字典数据表对应pydantic模型
     """
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
     dict_code: Optional[int] = Field(default=None, description='字典编码')
     dict_sort: Optional[int] = Field(default=None, description='字典排序')
@@ -98,6 +100,7 @@ class DictTypeQueryModel(DictTypeModel):
     end_time: Optional[str] = Field(default=None, description='结束时间')
 
 
+@as_query
 class DictTypePageQueryModel(DictTypeQueryModel):
     """
     字典类型管理分页查询模型
@@ -112,6 +115,8 @@ class DeleteDictTypeModel(BaseModel):
     删除字典类型模型
     """
 
+    model_config = ConfigDict(alias_generator=to_camel)
+
     dict_ids: str = Field(description='需要删除的字典主键')
 
 
@@ -124,6 +129,7 @@ class DictDataQueryModel(DictDataModel):
     end_time: Optional[str] = Field(default=None, description='结束时间')
 
 
+@as_query
 class DictDataPageQueryModel(DictDataQueryModel):
     """
     字典数据管理分页查询模型
@@ -137,5 +143,7 @@ class DeleteDictDataModel(BaseModel):
     """
     删除字典数据模型
     """
+
+    model_config = ConfigDict(alias_generator=to_camel)
 
     dict_codes: str = Field(description='需要删除的字典编码')
